@@ -160,6 +160,69 @@ def backtest(
         console.print(f"[yellow]unsettled:[/yellow] {ticker}: {reason}")
 
 
+@app.command("screen")
+def screen_command(
+    universe: str = typer.Option(
+        "all", "--universe", "-u", help="nasdaq100, sp500 (alias spy), or all; comma-separate several"
+    ),
+    capital: float = typer.Option(10_000, "--capital", help="Account size to split across the picks, in dollars"),
+    daily_target: float = typer.Option(100, "--daily-target", help="The profit per day you aim for, in dollars"),
+    top: int = typer.Option(3, "--top", help="How many picks to return"),
+    risk_pct: float = typer.Option(
+        1.0, "--risk", help="Most a single position may lose at its stop, as a % of capital"
+    ),
+    date: str = typer.Option(None, "--date", help="Screen as of this date, YYYY-MM-DD (default: today)"),
+    deep: bool = typer.Option(
+        False, "--deep", help="Also run the full multi-agent analysis on each pick (needs an LLM key)"
+    ),
+):
+    """Screen the Nasdaq-100 and S&P 500 for the top swing trades, sized to your capital."""
+    from cli.screen import render_screen
+    from tradingagents.screener import screen
+    from tradingagents.universes import load_universe
+
+    try:
+        constituents = load_universe(universe)
+        if date and not iter_grid(date, date):  # iter_grid validates YYYY-MM-DD
+            raise ValueError(f"{date} is in the future; screen as of today or an earlier date")
+        console.print(f"[dim]Reading daily bars for {len(constituents)} tickers...[/dim]")
+
+        def show_progress(done, total):
+            if done % 100 == 0 or done == total:
+                console.print(f"[dim]  {done}/{total}[/dim]")
+
+        result = screen(constituents, date, capital=capital, daily_target=daily_target, top=top,
+                        risk_pct=risk_pct / 100, progress=show_progress)
+    except ValueError as exc:
+        console.print(f"[red]{escape(str(exc))}[/red]")
+        raise typer.Exit(code=1) from None
+    render_screen(result)
+
+    if deep and result.picks:
+        from tradingagents.graph.trading_graph import TradingAgentsGraph
+
+        try:
+            graph = TradingAgentsGraph(config=DEFAULT_CONFIG)
+        except Exception as exc:  # a missing key is a setup error
+            console.print(f"[red]{escape(str(exc))}[/red]")
+            raise typer.Exit(code=1) from None
+        for pick in result.picks:
+            ticker = pick.constituent.yahoo_symbol
+            console.print(f"\n[bold]Agents on {ticker}[/bold] ({result.as_of})...")
+            try:
+                state, signal = graph.propagate(ticker, result.as_of)
+            except Exception as exc:  # a missing key or an outage ends this pick, not the rest
+                console.print(f"[red]{ticker}: {escape(str(exc))}[/red]")
+                continue
+            console.print(f"[bold]{ticker}: {signal}[/bold]")
+            console.print(escape(state.get("final_trade_decision", "")))
+
+
+# Spelled the way people ask for it: `tradingagents analyse-stock`.
+app.command("analyse-stock", help="Alias of `screen`.")(screen_command)
+app.command("analyze-stock", hidden=True)(screen_command)
+
+
 # The plans `login` and `logout` take: the providers signed in to, not keyed.
 Plan = StrEnum("Plan", {name: name for name in SIGNED_IN_PROVIDERS})
 
