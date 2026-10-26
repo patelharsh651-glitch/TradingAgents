@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Changes that need action when upgrading are listed under "Upgrading from" in their release.
 
+## [Unreleased]
+
+### Added
+
+- **Swing-trade screen.** `tradingagents screen` (alias `analyse-stock`) scans the Nasdaq-100 and S&P 500, shipped as ticker lists in `tradingagents/universes/`, and returns the top setups with entry, stop, target and a share count sized to `--capital` and `--risk`, plus how `--daily-target` compares with what the picks typically move. `--deep` runs the agents on each pick.
+
 ## [0.7.0] — 2026-10-16
 
 Runs on your ChatGPT plan, backtests scored from the first close after each decision, a note at start-up when a newer release is out, and a wheel attached to each GitHub release.
