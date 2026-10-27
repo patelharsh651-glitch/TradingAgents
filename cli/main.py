@@ -223,6 +223,81 @@ app.command("analyse-stock", help="Alias of `screen`.")(screen_command)
 app.command("analyze-stock", hidden=True)(screen_command)
 
 
+@app.command()
+def autotrade(
+    universe: str = typer.Option("all", "--universe", "-u", help="nasdaq100, sp500 (alias spy), or all"),
+    capital: float = typer.Option(10_000, "--capital", help="Capital the loop trades with, in dollars"),
+    daily_target: float = typer.Option(100, "--daily-target", help="The profit per day you aim for, in dollars"),
+    risk_pct: float = typer.Option(1.0, "--risk", help="Most one position may lose at its stop, as a % of capital"),
+    max_positions: int = typer.Option(3, "--max-positions", help="Most positions open at once"),
+    host: str = typer.Option("127.0.0.1", "--host", help="IB Gateway / TWS host"),
+    port: int = typer.Option(4002, "--port", help="4002 = IB Gateway paper, 7497 = TWS paper"),
+    client_id: int = typer.Option(17, "--client-id", help="API client id for this connection"),
+    state: str = typer.Option(None, "--state", help="State file (default ~/.tradingagents/autotrade/state.json)"),
+    not_before: str = typer.Option(
+        "09:31", "--not-before", help="Wait until this US Eastern time so the opening print is in, HH:MM"
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be traded without sending orders"),
+):
+    """Run one day of the swing-trade loop on an IBKR PAPER account: exits, then new entries."""
+    import time
+    from datetime import datetime, timedelta
+    from pathlib import Path
+    from zoneinfo import ZoneInfo
+
+    from tradingagents.autotrade import (
+        DEFAULT_STATE_PATH,
+        IBKRBroker,
+        NotPaperAccountError,
+        run_day,
+    )
+    from tradingagents.screener import screen
+    from tradingagents.universes import load_universe
+
+    eastern = ZoneInfo("America/New_York")
+    now = datetime.now(eastern)
+    hour, minute = (int(x) for x in not_before.split(":"))
+    start = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    if not dry_run and now < start:
+        console.print(f"[dim]Waiting until {not_before} ET...[/dim]")
+        time.sleep((start - now).total_seconds())
+
+    constituents = load_universe(universe)
+
+    # Screen on yesterday's close: during the session Yahoo's last bar is today's first minutes,
+    # which would skew the signals and hide the day's gap from the don't-chase check.
+    yesterday = datetime.now(eastern).date() - timedelta(days=1)
+    while yesterday.weekday() >= 5:
+        yesterday -= timedelta(days=1)
+
+    def screen_fn(top):
+        console.print(f"[dim]Screening {len(constituents)} tickers as of {yesterday}...[/dim]")
+        return screen(constituents, yesterday.isoformat(), capital=capital, daily_target=daily_target, top=top, risk_pct=risk_pct / 100)
+
+    try:
+        broker = IBKRBroker(host, port, client_id)
+    except Exception as exc:  # Gateway not running, wrong port, ib_async missing
+        console.print(f"[red]Could not connect to IB Gateway on {host}:{port}: {escape(str(exc))}[/red]")
+        raise typer.Exit(code=1) from None
+    try:
+        report = run_day(broker, screen_fn, capital=capital, risk_pct=risk_pct / 100,
+                         max_positions=max_positions, state_path=Path(state) if state else DEFAULT_STATE_PATH,
+                         dry_run=dry_run)
+    except NotPaperAccountError as exc:
+        console.print(f"[red]{escape(str(exc))}[/red]")
+        raise typer.Exit(code=2) from None
+    finally:
+        broker.close()
+
+    console.print(f"\n[bold]Autotrade {report.day}[/bold] on paper account {report.account}"
+                  f"{' (dry run)' if dry_run else ''}")
+    if report.screen:
+        console.print(f"Market: {report.screen.market_regime}")
+    for action in report.actions:
+        console.print(f"  {action.kind:<9} {action.symbol:<6} {escape(action.detail)}")
+    console.print("[dim]Paper trading only. A rules-based loop, not financial advice.[/dim]")
+
+
 # The plans `login` and `logout` take: the providers signed in to, not keyed.
 Plan = StrEnum("Plan", {name: name for name in SIGNED_IN_PROVIDERS})
 

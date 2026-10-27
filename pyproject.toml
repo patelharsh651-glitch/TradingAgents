@@ -41,6 +41,10 @@ dev = [
 bedrock = [
     "langchain-aws>=1.7.9",
 ]
+# Automated paper trading through IB Gateway / TWS: pip install "tradingagents[ibkr]".
+ibkr = [
+    "ib_async>=2.0",
+]
 
 [project.scripts]
 tradingagents = "cli.main:app"

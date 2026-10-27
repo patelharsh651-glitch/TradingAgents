@@ -258,6 +258,10 @@ The screen needs no LLM. It keeps stocks in an uptrend (close above the 50-day a
 
 $100 a day on $10,000 is 1% a day, about 250% a year before compounding, which is far above what professional traders sustain; read it as a stretch target, not a quota. The ticker lists live in `tradingagents/universes/` as of October 2026 and need refreshing when the indexes rebalance. This is a research tool, not financial advice.
 
+### Automated paper trading (IBKR)
+
+`tradingagents autotrade` runs the screen as a daily loop on an Interactive Brokers **paper** account through IB Gateway: it records stop and target exits, sells after 10 trading days, and buys the best new setups with bracket orders (limit entry, GTC stop, GTC target). It refuses any account whose ID does not start with `DU`. Install with `pip install -e ".[ibkr]"`, try `tradingagents autotrade --dry-run`, then schedule it for 9:30 AM ET on weekdays. Setup and scheduling: [docs/autotrade.md](docs/autotrade.md).
+
 ## TradingAgents Package
 
 ### Implementation Details
