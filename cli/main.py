@@ -166,7 +166,9 @@ def screen_command(
         "all", "--universe", "-u", help="nasdaq100, sp500 (alias spy), or all; comma-separate several"
     ),
     capital: float = typer.Option(10_000, "--capital", help="Account size to split across the picks, in dollars"),
-    daily_target: float = typer.Option(100, "--daily-target", help="The profit per day you aim for, in dollars"),
+    annual_target: float = typer.Option(
+        25.0, "--annual-target", help="The yearly profit you aim for, as a % of capital"
+    ),
     top: int = typer.Option(3, "--top", help="How many picks to return"),
     risk_pct: float = typer.Option(
         1.0, "--risk", help="Most a single position may lose at its stop, as a % of capital"
@@ -191,7 +193,7 @@ def screen_command(
             if done % 100 == 0 or done == total:
                 console.print(f"[dim]  {done}/{total}[/dim]")
 
-        result = screen(constituents, date, capital=capital, daily_target=daily_target, top=top,
+        result = screen(constituents, date, capital=capital, annual_target_pct=annual_target, top=top,
                         risk_pct=risk_pct / 100, progress=show_progress)
     except ValueError as exc:
         console.print(f"[red]{escape(str(exc))}[/red]")
