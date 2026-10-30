@@ -10,7 +10,7 @@ Changes that need action when upgrading are listed under "Upgrading from" in the
 
 ### Added
 
-- **Swing-trade screen.** `tradingagents screen` (alias `analyse-stock`) scans the Nasdaq-100 and S&P 500, shipped as ticker lists in `tradingagents/universes/`, and returns the top setups with entry, stop, target and a share count sized to `--capital` and `--risk`, plus how `--daily-target` compares with what the picks typically move. `--deep` runs the agents on each pick.
+- **Swing-trade screen.** `tradingagents screen` (alias `analyse-stock`) scans the Nasdaq-100 and S&P 500, shipped as ticker lists in `tradingagents/universes/`, and returns the top setups with entry, stop, target and a share count sized to `--capital` and `--risk`, plus how the yearly goal (`--annual-target`, 25% by default) translates into risk units and trades a year. `--deep` runs the agents on each pick.
 
 ## [0.7.0] — 2026-10-16
 
