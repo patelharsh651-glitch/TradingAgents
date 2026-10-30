@@ -24,7 +24,7 @@ def _pick(ticker, close=100.0) -> Pick:
 
 
 def _result(*tickers, spy_above_200=True) -> ScreenResult:
-    r = ScreenResult(as_of=TODAY.isoformat(), capital=10_000, daily_target=100, risk_pct=0.01)
+    r = ScreenResult(as_of=TODAY.isoformat(), capital=10_000, annual_target_pct=25, risk_pct=0.01)
     r.market = _sig(close=500.0, sma200=450.0 if spy_above_200 else 550.0)
     r.picks = [_pick(t) for t in tickers]
     return r

@@ -229,7 +229,7 @@ app.command("analyze-stock", hidden=True)(screen_command)
 def autotrade(
     universe: str = typer.Option("all", "--universe", "-u", help="nasdaq100, sp500 (alias spy), or all"),
     capital: float = typer.Option(10_000, "--capital", help="Capital the loop trades with, in dollars"),
-    daily_target: float = typer.Option(100, "--daily-target", help="The profit per day you aim for, in dollars"),
+    annual_target: float = typer.Option(25.0, "--annual-target", help="The yearly profit you aim for, as a % of capital"),
     risk_pct: float = typer.Option(1.0, "--risk", help="Most one position may lose at its stop, as a % of capital"),
     max_positions: int = typer.Option(3, "--max-positions", help="Most positions open at once"),
     host: str = typer.Option("127.0.0.1", "--host", help="IB Gateway / TWS host"),
@@ -274,7 +274,8 @@ def autotrade(
 
     def screen_fn(top):
         console.print(f"[dim]Screening {len(constituents)} tickers as of {yesterday}...[/dim]")
-        return screen(constituents, yesterday.isoformat(), capital=capital, daily_target=daily_target, top=top, risk_pct=risk_pct / 100)
+        return screen(constituents, yesterday.isoformat(), capital=capital, annual_target_pct=annual_target, top=top,
+                      risk_pct=risk_pct / 100)
 
     try:
         broker = IBKRBroker(host, port, client_id)

@@ -57,4 +57,4 @@ On Linux you can put `CRON_TZ=America/New_York` above that line to pin it to Eas
 | `--dry-run` | off | Show the plan, send nothing, keep no state |
 | `--state` | `~/.tradingagents/autotrade/state.json` | Where open positions and history are kept |
 
-$100 a day on $10,000 is 1% a day, an aggressive stretch target rather than something to expect daily. Stops are part of the plan. Paper trading only; this is not financial advice.
+The goal is about 25% a year (`--annual-target`), not a daily quota: on many days nothing passes and the loop buys nothing. Stops are part of the plan. Paper trading only; this is not financial advice.
