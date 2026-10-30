@@ -249,14 +249,14 @@ An interface will appear showing results as they load, letting you track the age
 `tradingagents analyse-stock` (or `tradingagents screen`) scans the Nasdaq-100 and the S&P 500 (the stocks in SPY), about 520 tickers, and returns the top three swing-trade setups sized to your account:
 
 ```bash
-tradingagents analyse-stock                          # $10,000, aiming for $100/day, top 3
-tradingagents screen --universe nasdaq100 --capital 25000 --daily-target 200
+tradingagents analyse-stock                          # $10,000, aiming for 25% a year, top 3
+tradingagents screen --universe nasdaq100 --capital 25000 --annual-target 20
 tradingagents screen --deep                          # then run the analyst agents on each pick
 ```
 
-The screen needs no LLM. It keeps stocks in an uptrend (close above the 50-day average, the 50-day above the 200-day) that have pulled back near their 20-day average, with RSI 40 to 70, a daily range (ATR) of 1.5% to 7% and at least $25M a day traded. It ranks them by strength against SPY, 20-day momentum, volume, how close the pullback is to the 20-day average and how well the daily range fits the goal. Each pick comes with an entry at the last close, a stop 1.5 ATR below and a target at twice the risk; positions are sized so none loses more than `--risk` (1% by default) of capital at its stop and all of them fit in the account at once. It also reports SPY's trend and how the daily goal compares with what the picks typically move.
+The screen needs no LLM. It keeps stocks in an uptrend (close above the 50-day average, the 50-day above the 200-day) that have pulled back near their 20-day average, with RSI 40 to 70, a daily range (ATR) of 1.5% to 7% and at least $25M a day traded. It ranks them by strength against SPY, 20-day momentum, volume, how close the pullback is to the 20-day average and how well the daily range fits a 10-day hold. Each pick comes with an entry at the last close, a stop 1.5 ATR below and a target at twice the risk; positions are sized so none loses more than `--risk` (1% by default) of capital at its stop and all of them fit in the account at once. It also reports SPY's trend and how the annual goal (`--annual-target`, 25% by default) translates into risk units and trades a year.
 
-$100 a day on $10,000 is 1% a day, about 250% a year before compounding, which is far above what professional traders sustain; read it as a stretch target, not a quota. The ticker lists live in `tradingagents/universes/` as of October 2026 and need refreshing when the indexes rebalance. This is a research tool, not financial advice.
+25% a year on $10,000 is $2,500, about $208 a month; there is no daily quota, and it is a target, not a promise. The ticker lists live in `tradingagents/universes/` as of October 2026 and need refreshing when the indexes rebalance. This is a research tool, not financial advice.
 
 ## TradingAgents Package
 
