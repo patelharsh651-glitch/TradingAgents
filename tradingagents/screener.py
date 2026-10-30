@@ -119,7 +119,7 @@ class Pick:
 class ScreenResult:
     as_of: str
     capital: float
-    daily_target: float
+    annual_target_pct: float
     risk_pct: float
     scanned: int = 0
     passed: int = 0
@@ -151,25 +151,27 @@ class ScreenResult:
         return "risk-off: SPY below its 200-day average; swing longs fail more often, consider half size or waiting"
 
     def goal_notes(self) -> list[str]:
-        """Plain statements of how the daily goal compares with what the picks can do."""
-        notes = []
-        goal_pct = 100 * self.daily_target / self.capital if self.capital else 0
-        notes.append(
-            f"${self.daily_target:,.0f}/day on ${self.capital:,.0f} is {goal_pct:.1f}% a day, "
-            f"about {goal_pct * 252:.0f}% a year before compounding: far above what professional "
-            "traders sustain. Treat it as a stretch target on good days, not a daily quota."
-        )
-        if self.picks:
+        """Plain statements of how the annual goal compares with what the picks can do."""
+        goal = self.capital * self.annual_target_pct / 100
+        notes = [
+            f"{self.annual_target_pct:g}% a year on ${self.capital:,.0f} is ${goal:,.0f}, about ${goal / 12:,.0f} a month. "
+            "There is no daily quota: skip days when nothing passes, and treat the goal as a target, not a promise."
+        ]
+        risk_unit = self.capital * self.risk_pct
+        if risk_unit:
+            r_needed = goal / risk_unit
             notes.append(
-                f"Together the picks typically move about ${self.daily_range:,.0f} a day (1 ATR, up or down). "
-                f"Making ${self.daily_target:,.0f} needs {100 * self.daily_target / self.daily_range:.0f}% "
-                "of that range to go your way."
-                if self.daily_range else "The picks have no measurable daily range."
+                f"At {100 * self.risk_pct:g}% risk (${risk_unit:,.0f}) per trade the goal is about {r_needed:.1f}R of net "
+                f"profit a year. A full winner makes {REWARD_R:g}R, a stopped trade loses 1R; at a 45% win rate "
+                f"that is roughly {r_needed / (0.45 * REWARD_R - 0.55):.0f} trades a year."
             )
+        if self.picks:
+            reward = sum(p.plan.reward for p in self.picks)
             notes.append(
                 f"If every stop is hit you lose about ${self.total_risk:,.0f} "
                 f"({100 * self.total_risk / self.capital:.1f}% of capital). "
-                f"If every target is hit you make about ${sum(p.plan.reward for p in self.picks):,.0f}."
+                f"If every target is hit you make about ${reward:,.0f}"
+                + (f" ({100 * reward / goal:.0f}% of the annual goal)." if goal else ".")
             )
         return notes
 
@@ -253,7 +255,7 @@ def screen(
     as_of: str | None = None,
     *,
     capital: float = 10_000,
-    daily_target: float = 100,
+    annual_target_pct: float = 25,
     top: int = 3,
     risk_pct: float = 0.01,
     loader: Callable[[str, str], pd.DataFrame] | None = None,
@@ -272,7 +274,7 @@ def screen(
         from tradingagents.dataflows.vendors.yahoo.ohlcv import load_ohlcv as loader
     as_of = as_of or date.today().isoformat()
     constituents = list(constituents)
-    result = ScreenResult(as_of=as_of, capital=capital, daily_target=daily_target, risk_pct=risk_pct,
+    result = ScreenResult(as_of=as_of, capital=capital, annual_target_pct=annual_target_pct, risk_pct=risk_pct,
                           scanned=len(constituents))
 
     try:

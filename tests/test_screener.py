@@ -113,7 +113,7 @@ def test_screen_returns_top_three_and_survives_unreadable_tickers():
     assert result.failures == [("BROKEN", "Yahoo Finance is unreachable")]
     assert result.deployed <= 10_000
     assert result.market_regime.startswith("risk-on")
-    assert any("1.0% a day" in note for note in result.goal_notes())
+    assert any("$2,500" in note for note in result.goal_notes())
 
 
 @pytest.mark.unit
@@ -132,7 +132,7 @@ def test_cli_screen_prints_a_plan(monkeypatch):
     real_screen = sc.screen
     monkeypatch.setattr(sc, "screen", lambda *a, **kw: real_screen(*a, **kw, loader=lambda s, d: frames.get(s)))
 
-    result = CliRunner().invoke(m.app, ["analyse-stock", "--capital", "10000", "--daily-target", "100"])
+    result = CliRunner().invoke(m.app, ["analyse-stock", "--capital", "10000", "--annual-target", "25"])
 
     assert result.exit_code == 0, result.output
     assert "Top 3 for $10,000" in result.output
